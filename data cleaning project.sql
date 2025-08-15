@@ -83,6 +83,7 @@ WHERE row_num > 1;  -- This will throw an error because MySQL doesn’t allow de
 -- Step 9: Create a new table 'layoffs_staging2' that includes a 'row_num' column.
 -- This is necessary because we can't delete directly using ROW_NUMBER() in MySQL.
 -- So we create a new table with the row numbers already included.
+
 CREATE TABLE layoffs_staging2 (
   company TEXT,
   location TEXT,
@@ -126,108 +127,148 @@ SET SQL_SAFE_UPDATES = 0;
  
 -----------------------------------------------------------------------------------------
 
-# 2.Standardized the Data
+-- 2. STANDARDIZE THE DATA
+-- Goal: make sure text data is consistent, clean, and in the right format
+------------------------------------------------
 
-select company,trim(company)from layoffs_staging2;
+-- See current company names and how they look after removing extra spaces
+SELECT company, TRIM(company)
+FROM layoffs_staging2;
 
-select distinct industry from layoffs_staging2;
+-- Check all unique industry names (to spot inconsistent spellings)
+SELECT DISTINCT industry
+FROM layoffs_staging2;
 
-update layoffs_staging2
-set company = trim(company);
+-- Remove leading and trailing spaces from all company names
+UPDATE layoffs_staging2
+SET company = TRIM(company);
 
+-- Turn off safe updates so we can run UPDATE without strict WHERE clauses
 SET SQL_SAFE_UPDATES = 0;
 
-select *
-from layoffs_staging2
-where industry like 'Crypto%';
+-- Show all rows where industry starts with 'Crypto' (e.g., Cryptocurrency)
+SELECT *
+FROM layoffs_staging2
+WHERE industry LIKE 'Crypto%';
 
-update layoffs_staging2
-set industry="Crypto"
-where industry like "Crypto%";
+-- Change all variations like 'Cryptocurrency' or 'Crypto - Web3' to just 'Crypto'
+UPDATE layoffs_staging2
+SET industry = 'Crypto'
+WHERE industry LIKE 'Crypto%';
 
-select distinct country
- from layoffs_staging2
- order by 1;
- 
- select country
- from layoffs_staging2 where country like "United States%"
- order by 1;
- 
- select distinct country, trim(trailing '.' from country)
- from layoffs_staging2
- order by 1;
- 
-update layoffs_staging2
-set country= trim(trailing '.' from country)
-where country like "United States%";
+-- Check all distinct country names
+SELECT DISTINCT country
+FROM layoffs_staging2
+ORDER BY 1;
 
-select  distinct country from layoffs_staging2;
+-- See all country names that start with 'United States'
+SELECT country
+FROM layoffs_staging2
+WHERE country LIKE 'United States%'
+ORDER BY 1;
 
-select date,
-str_to_date(date,'%m/%d/%Y')
-from layoffs_staging2;
+-- Preview what the country column would look like without a trailing dot
+SELECT DISTINCT country, TRIM(TRAILING '.' FROM country)
+FROM layoffs_staging2
+ORDER BY 1;
 
+-- Remove any trailing '.' in country values that start with 'United States'
+UPDATE layoffs_staging2
+SET country = TRIM(TRAILING '.' FROM country)
+WHERE country LIKE 'United States%';
+
+-- Recheck the unique country list after update
+SELECT DISTINCT country
+FROM layoffs_staging2;
+
+-- Preview date conversion: from text format (MM/DD/YYYY) to MySQL DATE
+SELECT `date`, STR_TO_DATE(`date`, '%m/%d/%Y')
+FROM layoffs_staging2;
+
+-- Update the date column to proper DATE values using STR_TO_DATE
 UPDATE layoffs_staging2
 SET `date` = STR_TO_DATE(`date`, '%m/%d/%Y');
 
-select date from layoffs_staging2;
+-- Check the date column after conversion
+SELECT `date`
+FROM layoffs_staging2;
 
+-- Change the column type to DATE so MySQL treats it as a real date
 ALTER TABLE layoffs_staging2
 MODIFY COLUMN `date` DATE;
 
 
 ------------------------------------------------
+-- 3. REMOVE NULL VALUES AND BLANK VALUES
+------------------------------------------------
 
- # 3.remove null values and blank values
- 
- select * from 
- layoffs_staging2 where  total_laid_off is null and
- percentage_laid_off is null;
- 
- select * from layoffs_staging2 
- where industry is null or  industry="" ;
+-- Find rows where both total_laid_off and percentage_laid_off are NULL
+SELECT *
+FROM layoffs_staging2
+WHERE total_laid_off IS NULL
+  AND percentage_laid_off IS NULL;
 
-select * 
-from layoffs_staging2
-where company="Airbnb";
+-- Find rows where industry is missing (either NULL or empty string)
+SELECT *
+FROM layoffs_staging2
+WHERE industry IS NULL
+   OR industry = '';
 
-select t1.industry,t2.industry
-from layoffs_staging2 t1
-join layoffs_staging2 t2
-   on t1.company=t2.company
-   and t1.location=t2.location
-where (t1.industry is null or t1.industry ="")
-and t2.industry is not null;
+-- Look at all records for Airbnb (just an example check)
+SELECT *
+FROM layoffs_staging2
+WHERE company = 'Airbnb';
 
-update layoffs_staging2
-set industry =Null
-where industry="";
+-- Find pairs of rows with same company & location where one has industry missing and the other has it filled
+SELECT t1.industry, t2.industry
+FROM layoffs_staging2 t1
+JOIN layoffs_staging2 t2
+  ON t1.company = t2.company
+ AND t1.location = t2.location
+WHERE (t1.industry IS NULL OR t1.industry = '')
+  AND t2.industry IS NOT NULL;
 
- update layoffs_staging2 t1
-join layoffs_staging2 t2
-   on t1.company=t2.company
-   set t1.industry = t2.industry
-where t1.industry is null
-and t2.industry is not null;
+-- Change empty string industry values to actual NULL values
+UPDATE layoffs_staging2
+SET industry = NULL
+WHERE industry = '';
 
- select * from 
- layoffs_staging2 where  total_laid_off is null and
- percentage_laid_off is null;
+-- Fill NULL industry values by copying from other rows with the same company
+UPDATE layoffs_staging2 t1
+JOIN layoffs_staging2 t2
+  ON t1.company = t2.company
+SET t1.industry = t2.industry
+WHERE t1.industry IS NULL
+  AND t2.industry IS NOT NULL;
 
-delete from
- layoffs_staging2 where  total_laid_off is null and
- percentage_laid_off is null;
- 
- select * from layoffs_staging2;
- 
- -----------------------------------------------------------------------
-#   4.Remove any Column data
+-- Recheck rows where both total_laid_off and percentage_laid_off are NULL
+SELECT *
+FROM layoffs_staging2
+WHERE total_laid_off IS NULL
+  AND percentage_laid_off IS NULL;
 
- select * from layoffs_staging2;
- 
- alter table layoffs_staging2
- drop column row_num;
+-- Delete rows where both total_laid_off and percentage_laid_off are NULL
+DELETE
+FROM layoffs_staging2
+WHERE total_laid_off IS NULL
+  AND percentage_laid_off IS NULL;
 
+-- Final check of the table after deletion
+SELECT *
+FROM layoffs_staging2;
+
+
+------------------------------------------------
+-- 4. REMOVE ANY UNNEEDED COLUMNS
+------------------------------------------------
+
+-- View the table structure and data before removing the column
+SELECT *
+FROM layoffs_staging2;
+
+-- Remove the 'row_num' column (likely used earlier for removing duplicates)
+ALTER TABLE layoffs_staging2
+DROP COLUMN row_num;
 
 
 
