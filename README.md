@@ -6,7 +6,7 @@
 This project cleans and prepares the Layoffs  Dataset from Kaggle for accurate analysis.
 I used MySQL to remove duplicate records, fix inconsistent data, handle missing values, and format columns properly.
 
-Dataset Source: Layoffs Dataset : https://www.kaggle.com/datase
+Dataset Source: Layoffs Dataset : https://www.kaggle.com/datasets/swaptr/layoffs-2022
 
 **Cleaning Steps**:->
 
@@ -21,5 +21,5 @@ Dataset Source: Layoffs Dataset : https://www.kaggle.com/datase
 **Goal**: To make the dataset clean, consistent, and ready for analysis, so future reports or dashboards give accurate insights.
 
 **Tools Used**:
-1.MySQL WorkBench for SQL queries and data cleaning.
+1.MySQL WorkBench for SQL queries and data cleaning.  
 2.Kaggle for dataset source
