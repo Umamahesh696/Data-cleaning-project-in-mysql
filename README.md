@@ -1,4 +1,4 @@
-**SQL Data Cleaning – Layoffs Dataset**
+**SQL Data Cleaning – Layoffs Dataset (using MySQL Workbench)**
 
 **About This Project:**
 This project cleans and prepares the Layoffs  Dataset from Kaggle for accurate analysis.
