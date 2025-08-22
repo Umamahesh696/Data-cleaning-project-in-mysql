@@ -1,7 +1,5 @@
 **SQL Data Cleaning – Layoffs Dataset**
 
-**Author**: Uma Maheswara Rao Sada — Open to Data Analyst / SQL Developer roles.
-
 **About This Project:**
 This project cleans and prepares the Layoffs  Dataset from Kaggle for accurate analysis.
 I used MySQL to remove duplicate records, fix inconsistent data, handle missing values, and format columns properly.
@@ -23,3 +21,5 @@ Dataset Source: Layoffs Dataset : https://www.kaggle.com/datasets/swaptr/layoffs
 **Tools Used**:
 1.MySQL WorkBench for SQL queries and data cleaning.  
 2.Kaggle for dataset source
+
+**Author**: Uma Maheswara Rao Sada — Open to Data Analyst / SQL Developer roles.
